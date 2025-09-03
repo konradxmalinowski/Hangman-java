@@ -4,18 +4,17 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class Hangman {
-//   TODO: Add db connection (scores, history, words)
     DatabaseConnection databaseConnection = new DatabaseConnection();
-
+    Scanner scanner = new Scanner(System.in);
     List<String> words = List.of("car", "cat", "programming", "computer");
     String randomWord;
-    Scanner scanner = new Scanner(System.in);
     char[] userWord;
     int mode;
     int chances;
 
     public void play() {
         System.out.println("Welcome to Hangman!");
+        databaseConnection.connect();
 
         while (true) {
             System.out.println("""
@@ -30,7 +29,10 @@ public class Hangman {
                 case 1 -> chances = 30;
                 case 2 -> chances = 20;
                 case 3 -> chances = 10;
-                case 4 -> System.exit(0);
+                case 4 -> {
+                    databaseConnection.disconnect();
+                    System.exit(0);
+                }
                 default -> {
                     System.out.println("Invalid input! Chances = 20");
                     chances = 20;
