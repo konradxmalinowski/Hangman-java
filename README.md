@@ -160,7 +160,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 👨‍💻 Author
 
-**Your Name** - _Initial work_ - [YourGitHub](https://github.com/yourusername)
+**Konrad Malinowski** - _Initial work_ - [https://github.com/konradxmalinowski](https://github.com/konradxmalinowski)
 
 ## 🙏 Acknowledgments
 
