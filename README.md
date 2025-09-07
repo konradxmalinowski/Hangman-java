@@ -1,10 +1,10 @@
 # 🎯 Hangman Game - Java Edition
 
-[![Java](https://img.shields.io/badge/Java-24-orange.svg)](https://www.oracle.com/java/)
+[![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
 [![Maven](https://img.shields.io/badge/Maven-3.6+-blue.svg)](https://maven.apache.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A classic **Hangman** word guessing game built with Java! 🎮 Challenge yourself with different difficulty levels and test your vocabulary skills. This project features a clean console interface and is designed with extensibility in mind for future database integration.
+A classic **Hangman** word guessing game built with Java! 🎮 Challenge yourself with different difficulty levels and test your vocabulary skills. The game now supports a real **MySQL database** for words and score history.
 
 ## ✨ Features
 
@@ -14,26 +14,32 @@ A classic **Hangman** word guessing game built with Java! 🎮 Challenge yoursel
   - Medium Mode: 20 chances
   - Hard Mode: 10 chances
 
-- 🎲 **Random Word Selection** from a curated word list
-- 📊 **Real-time Progress Tracking** with remaining chances
-- 🎨 **Clean Console Interface** with intuitive user experience
+- 🎲 **Random Word Selection** from a database-backed word list
+- 🛠️ **Settings Menu** to manage content and history:
+  - Add a new word
+  - Remove an existing word
+  - Remove a score by ID
+- 🧠 **Score Tracking**: saves every win/lose with remaining chances and date
+- 📊 **Real-time Progress** with remaining chances
+- 🎨 **Clean Console Interface** with intuitive UX
 - 🔄 **Continuous Gameplay** with option to exit
-- 🗄️ **Database Ready** - prepared for future score tracking and word management
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Java 24** or higher
+- **Java 17** or higher (matches `pom.xml`)
 - **Maven 3.6+** (for dependency management)
 - **Git** (for cloning the repository)
+- **MySQL 8+** running locally with access to create a database
+- IDE users: enable Lombok annotation processing
 
 ### Installation
 
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/Hangman-java.git
+   git clone https://github.com/konradxmalinowski/Hangman-java.git
    cd Hangman-java
    ```
 
@@ -45,15 +51,46 @@ A classic **Hangman** word guessing game built with Java! 🎮 Challenge yoursel
 
 3. **Run the game**
 
+   Using Maven (includes runtime dependencies on the classpath):
+
    ```bash
-   mvn exec:java -Dexec.mainClass="Main"
+   mvn -q exec:java -Dexec.mainClass=Main
    ```
 
-   Or simply:
+   Or run compiled classes directly (you must add dependencies to the classpath manually):
 
    ```bash
    java -cp target/classes Main
    ```
+
+### Database setup (MySQL)
+
+Run these SQL statements to prepare the database used by the app:
+
+```sql
+CREATE DATABASE IF NOT EXISTS `hangman-java` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `hangman-java`;
+
+CREATE TABLE IF NOT EXISTS words (
+  id   INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS scores (
+  id           INT AUTO_INCREMENT PRIMARY KEY,
+  leftChances  INT NOT NULL,
+  if_win       BOOLEAN NOT NULL,
+  date         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+Default connection (can be changed in `DatabaseConnection.java`):
+
+```
+jdbc:mysql://127.0.0.1:3306/hangman-java
+user: root
+password: ""
+```
 
 ## 🎮 How to Play
 
@@ -78,7 +115,8 @@ Choose game mode:
 1. Easy - 30 chances
 2. Medium - 20 chances
 3. Hard - 10 chances
-4. End
+4. Go to settings
+5. End
 
 Enter your choice: 2
 
@@ -102,9 +140,10 @@ Hangman-java/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   ├── Main.java              # Entry point
-│   │   │   ├── Hangman.java           # Core game logic
-│   │   │   └── DatabaseConnection.java # Database interface (future)
+│   │   │   ├── Main.java               # Entry point
+│   │   │   ├── Hangman.java            # Game logic + menu + score
+│   │   │   ├── Score.java              # Score model (Lombok)
+│   │   │   └── DatabaseConnection.java # MySQL access layer
 │   │   └── resources/
 │   └── test/
 │       └── java/
@@ -115,17 +154,18 @@ Hangman-java/
 
 ## 🔧 Technical Details
 
-- **Language**: Java 24
+- **Language**: Java 17
 - **Build Tool**: Maven
 - **Architecture**: Object-oriented design with separation of concerns
 - **Input Method**: Console-based user interaction
-- **Word Storage**: Currently uses a predefined list (expandable to database)
+- **Word Storage**: MySQL tables `words` and `scores`
+- **Dependencies**: `mysql-connector-j`, `slf4j-simple`, `lombok`
 
 ### Key Classes
 
 - **`Main`**: Application entry point
-- **`Hangman`**: Core game logic and user interaction
-- **`DatabaseConnection`**: Database interface (prepared for future implementation)
+- **`Hangman`**: Core game logic, settings menu, score persistence
+- **`DatabaseConnection`**: JDBC MySQL operations for words and scores
 
 ## 🚧 Future Enhancements
 
@@ -153,10 +193,6 @@ Contributions are welcome! 🎉 Here's how you can help:
 - Add comments for complex logic
 - Test your changes thoroughly
 - Update documentation as needed
-
-## 📝 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ## 👨‍💻 Author
 
