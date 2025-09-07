@@ -1,0 +1,27 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: hangman-java
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/1-init.sql:ro
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://db:3306/hangman-java
+      DB_USER: root
+      DB_PASSWORD: ""
+    stdin_open: true
+    tty: true
