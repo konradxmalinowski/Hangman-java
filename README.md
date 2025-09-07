@@ -63,9 +63,42 @@ A classic **Hangman** word guessing game built with Java! 🎮 Challenge yoursel
    java -cp target/classes Main
    ```
 
+### Run with Docker (recommended)
+
+1. Build the app image:
+
+   ```bash
+   docker build -t hangman-java-app .
+   ```
+
+2. Start MySQL and initialize schema/data automatically:
+
+   ```bash
+   docker compose up -d db
+   ```
+
+   Notes:
+
+   - `docker/init.sql` is mounted into the MySQL container and creates tables `words` and `scores` and seeds sample words.
+   - Default connection used by the app inside Docker: `jdbc:mysql://db:3306/hangman-java` with user `root` and empty password.
+
+3. Run the app interactively (so you can type choices):
+
+   ```bash
+   docker compose run --rm -it app
+   ```
+
+   Alternative (persistent): add `stdin_open: true` and `tty: true` under the `app` service in `docker-compose.yml`, then run:
+
+   ```bash
+   docker compose up --build
+   ```
+
 ### Database setup (MySQL)
 
-Run these SQL statements to prepare the database used by the app:
+If you're using Docker Compose, this step is automatic via `docker/init.sql`.
+
+If you're running MySQL locally, run these SQL statements to prepare the database used by the app:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS `hangman-java` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -84,12 +117,23 @@ CREATE TABLE IF NOT EXISTS scores (
 );
 ```
 
-Default connection (can be changed in `DatabaseConnection.java`):
+Default connection (can be changed in `DatabaseConnection.java` or via env vars):
 
 ```
 jdbc:mysql://127.0.0.1:3306/hangman-java
 user: root
 password: ""
+
+Environment variables recognized by the app:
+
+```
+
+DB_URL (default: jdbc:mysql://db:3306/hangman-java)
+DB_USER (default: root)
+DB_PASSWORD (default: "")
+
+```
+
 ```
 
 ## 🎮 How to Play
