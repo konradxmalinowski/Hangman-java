@@ -167,16 +167,6 @@ Hangman-java/
 - **`Hangman`**: Core game logic, settings menu, score persistence
 - **`DatabaseConnection`**: JDBC MySQL operations for words and scores
 
-## 🚧 Future Enhancements
-
-- [ ] 🗄️ **Database Integration** for word management and score tracking
-- [ ] 📈 **Score System** with high score leaderboards
-- [ ] 🎨 **GUI Interface** using JavaFX or Swing
-- [ ] 🌍 **Multi-language Support** for different word sets
-- [ ] 🎵 **Sound Effects** and background music
-- [ ] 📱 **Mobile Version** using Java ME or Android
-- [ ] 🤖 **AI Opponent** for competitive gameplay
-
 ## 🤝 Contributing
 
 Contributions are welcome! 🎉 Here's how you can help:
