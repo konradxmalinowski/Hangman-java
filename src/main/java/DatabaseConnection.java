@@ -6,14 +6,43 @@ import java.util.List;
 public class DatabaseConnection {
     Connection connection;
 
+    private final String dbUrl = System.getenv().getOrDefault("DB_URL", "jdbc:mysql://db:3306/hangman-java");
+    private final String dbUser = System.getenv().getOrDefault("DB_USER", "root");
+    private final String dbPassword = System.getenv().getOrDefault("DB_PASSWORD", "");
+
     public void connect() {
         try {
             if (connection != null && !connection.isClosed()) {
                 return;
             }
 
-            connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/hangman-java", "root", "");
-            System.out.println("Connected to the database");
+            int attempts = 0;
+            int maxAttempts = 15;
+            long delayMs = 1000;
+            while (true) {
+                try {
+                    connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+                    System.out.println("Connected to the database");
+                    break;
+                } catch (SQLException e) {
+                    attempts++;
+                    if (attempts >= maxAttempts) {
+                        System.out.println("Failed to connect to database after retries. Error message: " + e.getMessage());
+                        break;
+                    }
+                    System.out.println("Database not ready yet (" + e.getMessage() + "). Retrying in " + delayMs + " ms... [" + attempts + "/" + maxAttempts + "]");
+                    try {
+                        Thread.sleep(delayMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                    // optional backoff
+                    if (delayMs < 5000) {
+                        delayMs += 500;
+                    }
+                }
+            }
         } catch (SQLException e) {
             System.out.println("Failed to connect to database. Error message: " + e.getMessage());
         }
@@ -31,6 +60,9 @@ public class DatabaseConnection {
     }
 
     public List<String> getWords() {
+        if (connection == null) {
+            connect();
+        }
         final String query = "SELECT name FROM words";
         List<String> result = new ArrayList<>();
 
@@ -48,6 +80,9 @@ public class DatabaseConnection {
     }
 
     public List<String> getWordsWithId() {
+        if (connection == null) {
+            connect();
+        }
         final String query = "SELECT id, name FROM words";
         List<String> result = new ArrayList<>();
 
@@ -65,6 +100,9 @@ public class DatabaseConnection {
     }
 
     public void addWord(String word) {
+        if (connection == null) {
+            connect();
+        }
         String validatedWord = word.trim().toLowerCase();
         final String query = "INSERT IGNORE INTO words (name) VALUES (?)";
 
@@ -84,6 +122,9 @@ public class DatabaseConnection {
     }
 
     public void removeWord(String word) {
+        if (connection == null) {
+            connect();
+        }
         String validatedWord = word.trim().toLowerCase();
         final String query = "DELETE FROM words WHERE name = ?";
 
@@ -103,6 +144,9 @@ public class DatabaseConnection {
     }
 
     public List<Score> getScores() {
+        if (connection == null) {
+            connect();
+        }
         List<Score> result = new ArrayList<>();
         final String query = "SELECT id, leftChances, if_win, date FROM scores";
 
@@ -121,6 +165,9 @@ public class DatabaseConnection {
     }
 
     public void addScore(Score score) {
+        if (connection == null) {
+            connect();
+        }
         final String query = "INSERT IGNORE INTO scores (leftChances, if_win) VALUES (?, ?)";
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -139,6 +186,9 @@ public class DatabaseConnection {
     }
 
     public void removeScore(int id) {
+        if (connection == null) {
+            connect();
+        }
         final String query = "DELETE FROM scores WHERE id = ?";
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
