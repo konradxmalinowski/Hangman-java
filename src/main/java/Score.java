@@ -11,6 +11,7 @@ import java.sql.Date;
 @Builder
 public class Score {
     private int id;
-    private int score;
+    private int leftChances;
+    private boolean ifWin;
     private Date date;
 }

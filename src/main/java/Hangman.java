@@ -4,17 +4,29 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class Hangman {
-    DatabaseConnection databaseConnection = new DatabaseConnection();
-    Scanner scanner = new Scanner(System.in);
-    List<String> words = List.of("car", "cat", "programming", "computer");
-    String randomWord;
-    char[] userWord;
-    int mode;
-    int chances;
+    private final DatabaseConnection databaseConnection = new DatabaseConnection();
+    private final Scanner scanner = new Scanner(System.in);
+    private String randomWord;
+    private char[] userWord;
+    private int chances;
+    private boolean ifWin;
+
+    public void saveWord(String word) {
+        databaseConnection.addWord(word);
+    }
+
+    public void removeWord(String word) {
+        databaseConnection.removeWord(word);
+    }
+
+    public void removeScore(int id) {
+        databaseConnection.removeScore(id);
+    }
 
     public void play() {
         System.out.println("Welcome to Hangman!");
         databaseConnection.connect();
+        List<String> words = databaseConnection.getWords();
 
         while (true) {
             System.out.println("""
@@ -22,14 +34,52 @@ public class Hangman {
                     1. Easy - 30 chances
                     2. Medium - 20 chances
                     3. Hard - 10 chances
-                    4. End\s""");
-            mode = Integer.parseInt(scanner.nextLine());
+                    4. Go to settings
+                    5. End\s""");
+            int mode = Integer.parseInt(scanner.nextLine());
 
             switch (mode) {
                 case 1 -> chances = 30;
                 case 2 -> chances = 20;
                 case 3 -> chances = 10;
                 case 4 -> {
+                    System.out.println("""
+                            \n1. Add word
+                            2. Remove word
+                            3. Remove score""");
+                    int chosenOption = Integer.parseInt(scanner.nextLine());
+                    switch (chosenOption) {
+                        case 1 -> {
+                            System.out.println("Enter word: ");
+                            String wordToAdd = scanner.nextLine();
+                            saveWord(wordToAdd.toLowerCase().trim());
+                            words = databaseConnection.getWords();
+                        }
+                        case 2 -> {
+                            System.out.println("Choose word name: ");
+                            words.forEach(System.out::println);
+                            String wordName = scanner.nextLine();
+                            removeWord(wordName.toLowerCase().trim());
+                            words = databaseConnection.getWords();
+                        }
+                        case 3 -> {
+                            System.out.println("Enter score id: ");
+                            List<Score> scores = databaseConnection.getScores();
+                            if (scores.isEmpty()) {
+                                System.out.println("No scores found!");
+                                return;
+                            }
+
+                            int scoreId = Integer.parseInt(scanner.nextLine());
+                            removeScore(scoreId);
+                        }
+                        default -> {
+                            System.out.println("Invalid option!");
+                            return;
+                        }
+                    }
+                }
+                case 5 -> {
                     databaseConnection.disconnect();
                     System.exit(0);
                 }
@@ -44,7 +94,7 @@ public class Hangman {
             userWord = new char[randomWord.length()];
             Arrays.fill(userWord, '_');
 
-            System.out.println(userWord);
+            System.out.println(new String(userWord));
 
             while (chances > 0) {
                 System.out.println("\nEnter a character: ");
@@ -62,17 +112,12 @@ public class Hangman {
                     win();
                     break;
                 }
-
-                if (chances == 0) {
-                    lose();
-                    break;
-                }
             }
 
         }
     }
 
-    public void checkChar(char character) {
+    private void checkChar(char character) {
         boolean found = false;
 
         for (int i = 0; i < randomWord.length(); i++) {
@@ -90,13 +135,21 @@ public class Hangman {
         notGuessed();
     }
 
-    public void guessChar(char character) {
+    private void guessChar(char character) {
         if (randomWord.indexOf(character) == -1) {
             notGuessed();
             return;
         }
 
-        if (userWord[randomWord.indexOf(character)] != '_') {
+        boolean alreadyGuessed = true;
+        for (int i = 0; i < randomWord.length(); i++) {
+            if (randomWord.charAt(i) == character && userWord[i] == '_') {
+                alreadyGuessed = false;
+                break;
+            }
+        }
+
+        if (alreadyGuessed) {
             System.out.println("This letter is already in use!");
             return;
         }
@@ -104,28 +157,41 @@ public class Hangman {
         checkChar(character);
     }
 
-    public void guessed() {
+    private void guessed() {
         System.out.println("You guessed it!");
         System.out.println("Chances: " + chances);
-        System.out.println(userWord);
+        System.out.println(new String(userWord));
     }
 
-    public void notGuessed() {
+    private void notGuessed() {
         System.out.println("Invalid character!");
         chances--;
         System.out.println("Chances: " + chances);
-        System.out.println(userWord);
+        System.out.println(new String(userWord));
+
+        if (chances == 0) {
+            lose();
+        }
     }
 
-    public void win() {
+    private void win() {
+        ifWin = true;
         System.out.println("You win!");
         System.out.println("Chances: " + chances);
         System.out.println("Guessed word " + randomWord);
+        saveScore();
     }
 
-    public void lose() {
+    private void lose() {
+        ifWin = false;
         System.out.println("You lose!");
         System.out.println("Chances: " + chances);
         System.out.println("Not guessed word: " + randomWord);
+        saveScore();
+    }
+
+    private void saveScore() {
+        Score score = Score.builder().leftChances(chances).ifWin(ifWin).build();
+        databaseConnection.addScore(score);
     }
 }
